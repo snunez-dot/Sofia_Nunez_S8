@@ -1,0 +1,509 @@
+package cl.proyectosemana8;
+
+import java.util.ArrayList;
+import javax.swing.*;
+
+public class CajaBoutiqueAromas {
+
+    private static final ArrayList<Producto> productos = new ArrayList<>();
+
+    private static JTextField txtCodigo;
+    private static JTextField txtNombre;
+    private static JTextField txtPrecio;
+    private static JTextField txtOrigen;
+    private static JTextArea areaResultados;
+
+    public static void main(String[] args) {
+
+        SwingUtilities.invokeLater(() -> crearInterfaz());
+    }
+
+    // INTERFAZ
+    private static void crearInterfaz() {
+
+        JFrame ventana = new JFrame("Caja Boutique de Aromas");
+
+        ventana.setSize(900, 600);
+        ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        ventana.setLocationRelativeTo(null);
+        ventana.setLayout(null);
+
+        JLabel lblTitulo = new JLabel("CAJA BOUTIQUE DE AROMAS");
+        lblTitulo.setBounds(330, 15, 250, 30);
+
+        ventana.add(lblTitulo);
+
+        JLabel lblCodigo = new JLabel("Codigo:");
+        lblCodigo.setBounds(30, 65, 60, 25);
+
+        txtCodigo = new JTextField();
+        txtCodigo.setBounds(85, 65, 130, 25);
+
+        JLabel lblNombre = new JLabel("Nombre:");
+        lblNombre.setBounds(230, 65, 60, 25);
+
+        txtNombre = new JTextField();
+        txtNombre.setBounds(290, 65, 170, 25);
+
+        JLabel lblPrecio = new JLabel("Precio:");
+        lblPrecio.setBounds(475, 65, 60, 25);
+
+        txtPrecio = new JTextField();
+        txtPrecio.setBounds(530, 65, 100, 25);
+
+        JLabel lblOrigen = new JLabel("Origen:");
+        lblOrigen.setBounds(645, 65, 55, 25);
+
+        txtOrigen = new JTextField();
+        txtOrigen.setBounds(700, 65, 150, 25);
+
+        ventana.add(lblCodigo);
+        ventana.add(txtCodigo);
+
+        ventana.add(lblNombre);
+        ventana.add(txtNombre);
+
+        ventana.add(lblPrecio);
+        ventana.add(txtPrecio);
+
+        ventana.add(lblOrigen);
+        ventana.add(txtOrigen);
+
+        JButton btnAgregar = new JButton("Agregar Producto");
+        btnAgregar.setBounds(30, 110, 190, 35);
+
+        JButton btnEditar = new JButton(
+                "Editar Producto (por codigo)"
+        );
+        btnEditar.setBounds(235, 110, 190, 35);
+
+        JButton btnEstadisticas = new JButton("Calcular Estadisticas");
+        btnEstadisticas.setBounds(440, 110, 200, 35);
+
+        JButton btnBorrar = new JButton("Borrar Ultimo Registro");
+        btnBorrar.setBounds(655, 110, 195, 35);
+
+        ventana.add(btnAgregar);
+        ventana.add(btnEditar);
+        ventana.add(btnEstadisticas);
+        ventana.add(btnBorrar);
+
+        JLabel lblResultados = new JLabel(
+                "Productos registrados y resultados:"
+        );
+
+        lblResultados.setBounds(30, 165, 250, 25);
+
+        areaResultados = new JTextArea();
+        areaResultados.setEditable(false);
+        areaResultados.setLineWrap(true);
+        areaResultados.setWrapStyleWord(true);
+
+        JScrollPane scroll = new JScrollPane(areaResultados);
+        scroll.setBounds(30, 195, 820, 330);
+
+        ventana.add(lblResultados);
+        ventana.add(scroll);
+
+        btnAgregar.addActionListener(e -> agregarProducto());
+
+        btnEditar.addActionListener(e -> editarProductos());
+
+        btnEstadisticas.addActionListener(e -> calcularEstadisticas());
+
+        btnBorrar.addActionListener(e -> borrarUltimoProducto());
+
+        actualizarLista();
+
+        ventana.setVisible(true);
+    }
+
+    // VALIDADORES
+    private static void agregarProducto() {
+
+        String codigo = txtCodigo.getText().trim();
+        String nombre = txtNombre.getText().trim();
+        String precioTexto = txtPrecio.getText().trim();
+        String origen = txtOrigen.getText().trim();
+
+        if (codigo.isEmpty()) {
+
+            JOptionPane.showMessageDialog(
+                    null,
+                    "El campo codigo no puede estar vacio."
+            );
+
+            txtCodigo.requestFocus();
+            return;
+        }
+
+        if (nombre.isEmpty()) {
+
+            JOptionPane.showMessageDialog(
+                    null,
+                    "El campo nombre no puede estar vacio."
+            );
+
+            txtNombre.requestFocus();
+            return;
+        }
+
+        if (precioTexto.isEmpty()) {
+
+            JOptionPane.showMessageDialog(
+                    null,
+                    "El campo precio no puede estar vacio."
+            );
+
+            txtPrecio.requestFocus();
+            return;
+        }
+
+        if (origen.isEmpty()) {
+
+            JOptionPane.showMessageDialog(
+                    null,
+                    "El campo origen no puede estar vacio."
+            );
+
+            txtOrigen.requestFocus();
+            return;
+        }
+
+        int precio;
+
+        try {
+
+            precio = Integer.parseInt(precioTexto);
+
+            if (precio <= 0) {
+
+                JOptionPane.showMessageDialog(
+                        null,
+                        "El precio debe ser un numero entero positivo."
+                );
+
+                txtPrecio.requestFocus();
+                return;
+            }
+
+        } catch (NumberFormatException ex) {
+
+            JOptionPane.showMessageDialog(
+                    null,
+                    "El precio debe ser un numero entero valido."
+            );
+
+            txtPrecio.requestFocus();
+            return;
+        }
+
+        // ADMINISTRACION DE PRODUCTOS
+        Producto nuevoProducto = new Producto(
+                codigo,
+                nombre,
+                precio,
+                origen
+        );
+
+        productos.add(nuevoProducto);
+
+        actualizarLista();
+        limpiarCampos();
+
+        JOptionPane.showMessageDialog(
+                null,
+                "Producto agregado correctamente."
+        );
+    }
+
+    private static void actualizarLista() {
+
+        String contenido = "";
+
+        contenido += "========================================\n";
+        contenido += "       PRODUCTOS REGISTRADOS\n";
+        contenido += "========================================\n\n";
+
+        if (productos.isEmpty()) {
+
+            contenido += "No hay productos registrados.\n";
+
+        } else {
+
+            for (int i = 0; i < productos.size(); i++) {
+
+                Producto producto = productos.get(i);
+
+                contenido += "Producto #" + (i + 1) + "\n";
+                contenido += "Codigo: " + producto.getCodigo() + "\n";
+                contenido += "Nombre: " + producto.getNombre() + "\n";
+                contenido += "Precio: $" + producto.getPrecio() + "\n";
+                contenido += "Origen: " + producto.getOrigen() + "\n";
+                contenido += "----------------------------------------\n";
+            }
+        }
+
+        areaResultados.setText(contenido);
+    }
+
+    private static void limpiarCampos() {
+
+        txtCodigo.setText("");
+        txtNombre.setText("");
+        txtPrecio.setText("");
+        txtOrigen.setText("");
+
+        txtCodigo.requestFocus();
+    }
+
+    private static void editarProductos() {
+
+        String codigo = txtCodigo.getText().trim();
+        String nombre = txtNombre.getText().trim();
+        String precioTexto = txtPrecio.getText().trim();
+        String origen = txtOrigen.getText().trim();
+
+        if (codigo.isEmpty()) {
+
+            JOptionPane.showMessageDialog(
+                    null,
+                    "El campo codigo no puede estar vacio."
+            );
+
+            txtCodigo.requestFocus();
+            return;
+        }
+
+        if (nombre.isEmpty()) {
+
+            JOptionPane.showMessageDialog(
+                    null,
+                    "El campo nombre no puede estar vacio."
+            );
+
+            txtNombre.requestFocus();
+            return;
+        }
+
+        if (precioTexto.isEmpty()) {
+
+            JOptionPane.showMessageDialog(
+                    null,
+                    "El campo precio no puede estar vacio."
+            );
+
+            txtPrecio.requestFocus();
+            return;
+        }
+
+        if (origen.isEmpty()) {
+
+            JOptionPane.showMessageDialog(
+                    null,
+                    "El campo origen no puede estar vacio."
+            );
+
+            txtOrigen.requestFocus();
+            return;
+        }
+
+        int precio;
+
+        try {
+
+            precio = Integer.parseInt(precioTexto);
+
+            if (precio <= 0) {
+
+                JOptionPane.showMessageDialog(
+                        null,
+                        "El precio debe ser un numero entero positivo."
+                );
+
+                txtPrecio.requestFocus();
+                return;
+            }
+
+        } catch (NumberFormatException ex) {
+
+            JOptionPane.showMessageDialog(
+                    null,
+                    "El precio debe ser un numero entero valido."
+            );
+
+            txtPrecio.requestFocus();
+            return;
+        }
+
+        int productosEditados = 0;
+
+        for (int i = 0; i < productos.size(); i++) {
+
+            Producto producto = productos.get(i);
+
+            if (producto.getCodigo().equals(codigo)) {
+
+                producto.setNombre(nombre);
+                producto.setPrecio(precio);
+                producto.setOrigen(origen);
+
+                productosEditados++;
+            }
+        }
+
+        if (productosEditados == 0) {
+
+            JOptionPane.showMessageDialog(
+                    null,
+                    "No se encontro ningun producto con el codigo indicado."
+            );
+
+            txtCodigo.requestFocus();
+            return;
+        }
+
+        actualizarLista();
+        limpiarCampos();
+
+        JOptionPane.showMessageDialog(
+                null,
+                "Se actualizaron "
+                + productosEditados
+                + " producto(s) correctamente."
+        );
+    }
+
+    // ESTADISTICAS
+    private static void calcularEstadisticas() {
+
+        if (productos.isEmpty()) {
+
+            JOptionPane.showMessageDialog(
+                    null,
+                    "No hay productos registrados para calcular estadisticas."
+            );
+
+            return;
+        }
+
+        int total = 0;
+
+        int precioMasCaro = productos.get(0).getPrecio();
+        int precioMasBarato = productos.get(0).getPrecio();
+
+        String nombreMasCaro = productos.get(0).getNombre();
+        String nombreMasBarato = productos.get(0).getNombre();
+
+        for (int i = 0; i < productos.size(); i++) {
+
+            Producto producto = productos.get(i);
+
+            total += producto.getPrecio();
+
+            if (producto.getPrecio() > precioMasCaro) {
+
+                precioMasCaro = producto.getPrecio();
+                nombreMasCaro = producto.getNombre();
+            }
+
+            if (producto.getPrecio() < precioMasBarato) {
+
+                precioMasBarato = producto.getPrecio();
+                nombreMasBarato = producto.getNombre();
+            }
+        }
+
+        double promedio = (double) total / productos.size();
+
+        String mensaje;
+
+        if (total > 100000) {
+
+            mensaje = "¡Gracias por elegir fragancias conscientes! "
+                    + "Has ganado un set exclusivo de velas aromáticas";
+
+        } else if (total >= 30000) {
+
+            mensaje = "Obtienes un cupón del 15% de descuento "
+                    + "en tu próxima visita a Boutique de Aromas";
+
+        } else {
+
+            mensaje = "Gracias por tu compra. "
+                    + "¡Esperamos verte pronto en Boutique de Aromas!";
+        }
+
+        actualizarLista();
+
+        areaResultados.append("\n");
+        areaResultados.append("========================================\n");
+        areaResultados.append("           ESTADISTICAS\n");
+        areaResultados.append("========================================\n\n");
+
+        areaResultados.append(
+                "Cantidad de productos: "
+                + productos.size()
+                + "\n"
+        );
+
+        areaResultados.append(
+                "Total gastado: $"
+                + total
+                + "\n"
+        );
+
+        areaResultados.append(
+                "Precio promedio: $"
+                + String.format("%.2f", promedio)
+                + "\n"
+        );
+
+        areaResultados.append(
+                "Producto mas caro: "
+                + nombreMasCaro
+                + " - $"
+                + precioMasCaro
+                + "\n"
+        );
+
+        areaResultados.append(
+                "Producto mas barato: "
+                + nombreMasBarato
+                + " - $"
+                + precioMasBarato
+                + "\n"
+        );
+
+        areaResultados.append("\n");
+        areaResultados.append("MENSAJE PARA EL CLIENTE\n");
+        areaResultados.append(mensaje);
+    }
+
+    private static void borrarUltimoProducto() {
+
+        if (productos.isEmpty()) {
+
+            JOptionPane.showMessageDialog(
+                    null,
+                    "No hay productos registrados para borrar."
+            );
+
+            return;
+        }
+
+        int ultimaPosicion = productos.size() - 1;
+
+        Producto productoEliminado = productos.get(ultimaPosicion);
+
+        productos.remove(ultimaPosicion);
+
+        actualizarLista();
+
+        JOptionPane.showMessageDialog(
+                null,
+                "Se elimino el producto: "
+                + productoEliminado.getNombre()
+        );
+    }
+}
